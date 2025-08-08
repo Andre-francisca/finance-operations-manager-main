@@ -1,13 +1,14 @@
-version: '3.8'
+﻿version: '3.8'
 
 services:
-  web:
-    build: .
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finance-frontend-1
+    restart: always
     ports:
-      - "5173:5173"
+      - "3000:80"
     volumes:
       - .:/app
       - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    command: npm run dev -- --host

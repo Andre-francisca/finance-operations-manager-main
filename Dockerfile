@@ -1,23 +1,35 @@
-# Use Node.js LTS (Long Term Support) as the base image
-FROM node:20-alpine
+﻿# Étape 1 : Construire l'application React/Frontend
+# Utilise une image Node.js pour compiler l'application
+FROM node:18-alpine AS builder
 
-# Set working directory
+# Définir le répertoire de travail
 WORKDIR /app
 
-# Copy package files
+# Copier les fichiers de dépendances et les installer
 COPY package*.json ./
 
-# Install dependencies
 RUN npm install
 
-# Copy project files
+# Copier le reste du code source de l'application
 COPY . .
 
-# Build the application
+# Construire l'application pour la production
+# La sortie sera dans le dossier 'dist'
 RUN npm run build
 
-# Expose port 5173 (Vite's default port)
-EXPOSE 5173
+# Étape 2 : Servir l'application avec Nginx
+# Utilise une image Nginx légère pour servir les fichiers statiques
+FROM nginx:alpine
 
-# Start the application
-CMD ["npm", "run", "dev", "--", "--host"]
+# Copier la configuration Nginx
+COPY ./docker/nginx/frontend.conf /etc/nginx/conf.d/default.conf
+
+# Copier les fichiers de construction depuis l'étape 1,
+# en utilisant le bon nom de dossier (dist)
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Exposer le port par défaut de Nginx
+EXPOSE 80
+
+# Commande pour démarrer Nginx
+CMD ["nginx", "-g", "daemon off;"]
